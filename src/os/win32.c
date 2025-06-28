@@ -3,6 +3,7 @@
 
 #include "win32.h"
 
+//Some parts of code here are from https://github.com/obsproject/obs-studio/blob/master/plugins/win-capture/cursor-capture.c
 
 static BOOL check_alpha(UINT8 *pix, SIZE_T size) {
 	for (size_t a = 0; a < size; a++) {
