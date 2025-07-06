@@ -67,15 +67,15 @@ static void inverter_render(void *data, gs_effect_t *effect) {
 		return;
 	}
 
-	uint32_t x_rend = obs_source_get_base_width(inverter_options->source);
-	uint32_t y_rend = obs_source_get_base_height(inverter_options->source);
+	uint32_t source_width = obs_source_get_base_width(inverter_options->source);
+	uint32_t source_height = obs_source_get_base_height(inverter_options->source);
 
 	gs_texrender_reset(inverter_options->texrend);
 
 	gs_blend_state_push();
 	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
 
-	if (gs_texrender_begin(inverter_options->texrend, x_rend, y_rend)) {
+	if (gs_texrender_begin(inverter_options->texrend, source_width, source_height)) {
 		uint32_t source_params = obs_source_get_output_flags(target);
 		bool custom_draw = (source_params & OBS_SOURCE_CUSTOM_DRAW),
 		     async_draw = (source_params & OBS_SOURCE_ASYNC);
@@ -84,7 +84,7 @@ static void inverter_render(void *data, gs_effect_t *effect) {
 
 		vec4_zero(&col);
 		gs_clear(GS_CLEAR_COLOR, &col, 0.0f, 0);
-		gs_ortho(0.0f, (float)x_rend, 0.0f, (float)y_rend, -100.0f, 100.0f);
+		gs_ortho(0.0f, (float)source_width, 0.0f, (float)source_height, -100.0f, 100.0f);
 
 		if (target == parent && !custom_draw && !async_draw)
 			obs_source_default_render(target);
@@ -110,9 +110,12 @@ static void inverter_render(void *data, gs_effect_t *effect) {
 		return;
 	}
 
+	uint32_t x_pos = cursor_pos.x - cursor_pos.x_hotspot,
+		y_pos = cursor_pos.y - cursor_pos.y_hotspot;
+		
 	while (gs_effect_loop(default_effect, "Draw")) {
-			obs_source_draw(source_texture, 0, 0, x_rend, y_rend, false);
-			obs_source_draw(cursor_texture, cursor_pos.x, cursor_pos.y, 0, 0, false);
+			obs_source_draw(source_texture, 0, 0, 0, 0, false);
+			obs_source_draw(cursor_texture, x_pos, y_pos, 0, 0, false);
 	}
 
 	obs_enter_graphics();

@@ -99,7 +99,6 @@ static PUINT8 process_bitmaps(HBITMAP hbm_mask, HBITMAP hbm_colour, BOOL invert)
 
 		    if (!and_mask) {
 			    if (invert) *(PUINT32)&output_data[a * 4] = !xor_mask ? 0xFFFFFFFF : 0xFF000000;
-
 			    else *(PUINT32)&output_data[a * 4] = !!xor_mask ? 0xFFFFFFFF : 0xFF000000;
 		    }
 				else *(PUINT32)&output_data[a * 4] = !!xor_mask ? 0xFFFFFFFF : 0;
@@ -111,29 +110,32 @@ static PUINT8 process_bitmaps(HBITMAP hbm_mask, HBITMAP hbm_colour, BOOL invert)
 }
 
 gs_texture_t *get_cursor_bitmap(position *position) {
-    CURSORINFO cur_info = {.cbSize = sizeof(CURSORINFO)};
+    CURSORINFO cur_info = {
+		.cbSize = sizeof(CURSORINFO),
+		.hCursor = NULL
+	};
 
-	GetCursorInfo(&cur_info);
+	if (!GetCursorInfo(&cur_info)) return NULL;
 
 	GetCursorPos(&cur_info.ptScreenPos);
 
 	ICONINFO icon_info;
 
-	if (cur_info.hCursor == NULL) {
-		return NULL;
-	}
-
 	HICON cur_icon = CopyCursor(cur_info.hCursor);
 
 	GetIconInfo(cur_icon, &icon_info);
+
+	if (!cur_icon) return NULL;	
 
 	gs_texture_t *cursor_texture = NULL;
 
 	BOOL cur_monochrome = icon_info.hbmColor ? FALSE : TRUE,
         invert = GetKeyState(VK_LBUTTON) & 0x8000;
-
+	
     position->x = cur_info.ptScreenPos.x;
     position->y = cur_info.ptScreenPos.y;
+	position->x_hotspot = icon_info.xHotspot;
+	position->y_hotspot = icon_info.yHotspot;
 
     SIZE resolution;
 
@@ -143,7 +145,6 @@ gs_texture_t *get_cursor_bitmap(position *position) {
     } 
 
 	else get_bitmap_res(icon_info.hbmMask, &resolution);
-
 
     PUINT8 pixel_data = process_bitmaps(icon_info.hbmMask, icon_info.hbmColor, invert);
 
